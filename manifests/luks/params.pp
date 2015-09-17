@@ -8,7 +8,7 @@ class sys::luks::params {
       $package = 'cryptsetup'
     }
     redhat: {
-      $package = 'cryptsetup-luks'
+      $package = 'cryptsetup'
     }
     default: {
       fail("Do not know how to install LUKS on ${::osfamily}.\n")
