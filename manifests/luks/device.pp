@@ -142,6 +142,13 @@ define sys::luks::device(
     }
   }
 
+  exec { "ensure mountpoint '${fixed_mountpath}' exists":
+    path    => [ '/bin', '/usr/bin' ],
+    command => "mkdir -p ${fixed_mountpath}",
+    unless  => "test -d ${fixed_mountpath}",
+    before  => Mount[$mount_title],
+  }
+
   mount { $mount_title:
     ensure  => $mount_ensure,
     name    => $fixed_mountpath,
