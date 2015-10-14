@@ -1,7 +1,7 @@
 Puppet::Type.type(:filesystem).provide :luks do
-    desc "Manages filesystem of a luks containe"
+    desc "Manages filesystem of a luks container"
 
-    commands :mount => 'mount'
+    commands :blkid => 'blkid'
 
     def create
         mkfs(@resource[:fs_type])
@@ -16,7 +16,7 @@ Puppet::Type.type(:filesystem).provide :luks do
     end
 
     def fstype
-        mount('-f', '--guess-fstype', @resource[:name]).strip
+      /\bTYPE=\"(\S+)\"/.match(blkid(@resource[:name]))[1]
     rescue Puppet::ExecutionFailure
         nil
     end
