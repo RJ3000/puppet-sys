@@ -56,6 +56,7 @@ define sys::luks::device(
   $pass         = '2',
   $dump         = '1',
   $mountpath    = "/${name}",
+  $options      = 'defaults',
 ) {
   # Ensure LUKS is available.
   include sys::luks
