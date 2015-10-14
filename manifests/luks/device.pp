@@ -46,9 +46,16 @@
 define sys::luks::device(
   $device,
   $key,
-  $base64 = false,
-  $mapper = $name,
-  $temp   = "/dev/shm/${name}"
+  $base64       = false,
+  $mapper       = $name,
+  $temp         = "/dev/shm/${name}",
+  $ensure       = present,
+  $createfs     = true,
+  $fs_type      = 'ext4',
+  $mkfs_options = undef,
+  $pass         = '2',
+  $dump         = '1',
+  $mountpath    = "/${name}",
 ) {
   # Ensure LUKS is available.
   include sys::luks
@@ -59,6 +66,16 @@ define sys::luks::device(
   $delete_key = "delete-key-${name}"
   $luks_format = "luks-format-${name}"
   $luks_open = "luks-open-${name}"
+
+  #Setting up variable names for the mount.
+  $mount_title     = $mountpath
+  $fixed_mountpath = $mountpath
+  $fixed_pass      = $pass
+  $fixed_dump      = $dump
+  $mount_ensure    = $ensure ? {
+    'absent' => absent,
+    default  => mounted,
+  }
 
   # Temporary file to hold the key.  Actual key contents are put in placed
   # and removed via the $create_key and $delete_key exec resources.
@@ -113,5 +130,26 @@ define sys::luks::device(
     command     => "${shred} && /bin/echo -n > ${temp}",
     user        => 'root',
     refreshonly => true,
+  }
+
+  if $createfs {
+    filesystem { $devmapper:
+      ensure  => $ensure,
+      fs_type => $fs_type,
+      options => $mkfs_options,
+      require => Exec[$luks_open],
+    }
+  }
+
+  mount { $mount_title:
+    ensure  => $mount_ensure,
+    name    => $fixed_mountpath,
+    device  => $devmapper,
+    fstype  => $fs_type,
+    options => $options,
+    pass    => $fixed_pass,
+    dump    => $fixed_dump,
+    atboot  => true,
+    require => Filesystem[$devmapper],
   }
 }
